@@ -1,0 +1,68 @@
+name: Build & publish release
+
+# Tag a commit to publish an update to everyone running FinFolio:
+#   npm version patch && git push --follow-tags
+#
+# The workflow builds the Windows installer and attaches it — plus the
+# latest.yml feed that electron-updater reads — to a GitHub Release.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: 'Create the release as a draft'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out the source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check source and run tests
+        run: npm run verify
+
+      - name: Test the build window's logic
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/test-build-gui.ps1
+
+      - name: Build and publish the installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Code signing (optional): add CSC_LINK and CSC_KEY_PASSWORD as repo
+          # secrets and the installer is signed automatically, which removes the
+          # Windows SmartScreen warning.
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: npm run release
+
+      - name: Keep the build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finfolio-windows
+          path: |
+            dist/*.exe
+            dist/*.yml
+            dist/*.blockmap
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,6 @@
+{
+  "name": "finfolio-renderer",
+  "private": true,
+  "type": "module",
+  "//": "Marks every file under src/renderer as an ES module. The renderer loads plain ES modules in the browser; this file is what lets Node (syntax checks and unit tests) read them the same way."
+}

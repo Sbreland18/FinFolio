@@ -1,0 +1,60 @@
+appId: com.sbreland.finfolio
+productName: FinFolio
+copyright: Copyright © 2026 Spencer Breland
+
+directories:
+  output: dist
+  buildResources: build
+
+# Only ship what the app actually needs.
+files:
+  - src/**/*
+  - package.json
+  - build/icon.png
+  - "!**/*.md"
+  - "!**/*.map"
+  - "!**/.DS_Store"
+
+# Faster installs, smaller output.
+compression: maximum
+removePackageScripts: true
+npmRebuild: false
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  artifactName: ${productName}-Setup-${version}.${ext}
+  # Windows SmartScreen will warn until the exe is code-signed.
+  # To sign, set CSC_LINK (path/base64 of .pfx) and CSC_KEY_PASSWORD env vars.
+  signAndEditExecutable: true
+
+portable:
+  artifactName: ${productName}-Portable-${version}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: FinFolio
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  uninstallDisplayName: ${productName} ${version}
+  license: build/license.txt
+  # Never wipe the user's financial data on uninstall.
+  deleteAppDataOnUninstall: false
+  differentialPackage: true
+
+# Auto-update feed: GitHub Releases on Sbreland18/finfolio
+publish:
+  - provider: github
+    owner: Sbreland18
+    repo: finfolio
+    releaseType: release
